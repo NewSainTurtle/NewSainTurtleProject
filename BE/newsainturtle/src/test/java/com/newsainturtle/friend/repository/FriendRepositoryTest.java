@@ -32,7 +32,7 @@ class FriendRepositoryTest {
         void NoFriendRequestSentAndNoFriendRequestReceived(){
             //given
             final User requestUser = User.builder()
-                    .email("yunaghgh@naver.com")
+                    .email("test@naver.com")
                     .nickname("Kuuuna98")
                     .password("pwd1234")
                     .kakao(false)
@@ -40,7 +40,7 @@ class FriendRepositoryTest {
                     .withdraw(false)
                     .build();
             final User receiveUser = User.builder()
-                    .email("test127@naver.com")
+                    .email("test1@naver.com")
                     .nickname("johnny")
                     .password("pwd127")
                     .kakao(false)
@@ -68,7 +68,7 @@ class FriendRepositoryTest {
         void NoFriendRequestSentAndFriendRequestReceived(){
             //given
             final User requestUser = User.builder()
-                    .email("yunaghgh@naver.com")
+                    .email("test@naver.com")
                     .nickname("Kuuuna98")
                     .password("pwd1234")
                     .kakao(false)
@@ -76,7 +76,7 @@ class FriendRepositoryTest {
                     .withdraw(false)
                     .build();
             final User receiveUser = User.builder()
-                    .email("test127@naver.com")
+                    .email("test1@naver.com")
                     .nickname("johnny")
                     .password("pwd127")
                     .kakao(false)
@@ -111,7 +111,7 @@ class FriendRepositoryTest {
         void alreadyFriendRequestSent(){
             //given
             final User requestUser = User.builder()
-                    .email("yunaghgh@naver.com")
+                    .email("test@naver.com")
                     .nickname("Kuuuna98")
                     .password("pwd1234")
                     .kakao(false)
@@ -119,7 +119,7 @@ class FriendRepositoryTest {
                     .withdraw(false)
                     .build();
             final User receiveUser = User.builder()
-                    .email("test127@naver.com")
+                    .email("test1@naver.com")
                     .nickname("johnny")
                     .password("pwd127")
                     .kakao(false)
@@ -151,7 +151,7 @@ class FriendRepositoryTest {
         void alreadyFriendStatus(){
             //given
             final User requestUser = User.builder()
-                    .email("yunaghgh@naver.com")
+                    .email("test@naver.com")
                     .nickname("Kuuuna98")
                     .password("pwd1234")
                     .kakao(false)
@@ -159,7 +159,7 @@ class FriendRepositoryTest {
                     .withdraw(false)
                     .build();
             final User receiveUser = User.builder()
-                    .email("test127@naver.com")
+                    .email("test1@naver.com")
                     .nickname("johnny")
                     .password("pwd127")
                     .kakao(false)
@@ -198,7 +198,7 @@ class FriendRepositoryTest {
         void 친구가없는경우(){
             //given
             final User user = User.builder()
-                    .email("yunaghgh@naver.com")
+                    .email("test@naver.com")
                     .nickname("Kuuuna98")
                     .password("pwd1234")
                     .kakao(false)
@@ -219,7 +219,7 @@ class FriendRepositoryTest {
         void 친구가있는경우(){
             //given
             final User user = User.builder()
-                    .email("yunaghgh@naver.com")
+                    .email("test@naver.com")
                     .nickname("Kuuuna98")
                     .password("pwd1234")
                     .kakao(false)
@@ -227,7 +227,7 @@ class FriendRepositoryTest {
                     .withdraw(false)
                     .build();
             final User friendUser1 = User.builder()
-                    .email("test127@naver.com")
+                    .email("test1@naver.com")
                     .nickname("johnny")
                     .password("pwd127")
                     .kakao(false)
@@ -277,7 +277,7 @@ class FriendRepositoryTest {
         void 친구가아닌경우(){
             //given
             final User user = User.builder()
-                    .email("yunaghgh@naver.com")
+                    .email("test@naver.com")
                     .nickname("Kuuuna98")
                     .password("pwd1234")
                     .kakao(false)
@@ -285,7 +285,7 @@ class FriendRepositoryTest {
                     .withdraw(false)
                     .build();
             final User friendUser = User.builder()
-                    .email("test127@naver.com")
+                    .email("test1@naver.com")
                     .nickname("johnny")
                     .password("pwd127")
                     .kakao(false)
@@ -306,7 +306,7 @@ class FriendRepositoryTest {
         void 친구삭제성공(){
             //given
             final User user = User.builder()
-                    .email("yunaghgh@naver.com")
+                    .email("test@naver.com")
                     .nickname("Kuuuna98")
                     .password("pwd1234")
                     .kakao(false)
@@ -314,7 +314,7 @@ class FriendRepositoryTest {
                     .withdraw(false)
                     .build();
             final User friendUser = User.builder()
-                    .email("test127@naver.com")
+                    .email("test1@naver.com")
                     .nickname("johnny")
                     .password("pwd127")
                     .kakao(false)
@@ -342,6 +342,48 @@ class FriendRepositoryTest {
                     ()-> assertNotNull(resultBeforeDelete),
                     ()-> assertNull(resultAfterDelete)
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("요청 거절 당했을 때, 친구 데이터 삭제")
+    class RemoveRejectedUser {
+
+        @Test
+        @DisplayName("[성공] - 친구삭제")
+        void 친구삭제성공(){
+            //given
+            final User user = User.builder()
+                    .email("test@naver.com")
+                    .nickname("Kuuuna98")
+                    .password("pwd1234")
+                    .kakao(false)
+                    .profile("path")
+                    .withdraw(false)
+                    .build();
+            final User friendUser = User.builder()
+                    .email("test1@naver.com")
+                    .nickname("johnny")
+                    .password("pwd127")
+                    .kakao(false)
+                    .profile("path")
+                    .withdraw(false)
+                    .build();
+
+            final Friend friend = Friend.builder()
+                    .isAccept(true)
+                    .receiveUser(user)
+                    .requestUser(friendUser)
+                    .build();
+
+            userRepository.save(user);
+            userRepository.save(friendUser);
+            friendRepository.save(friend);
+
+            //when
+            friendRepository.deleteRejectedUser(user,friendUser);
+
+            //then
         }
     }
 }

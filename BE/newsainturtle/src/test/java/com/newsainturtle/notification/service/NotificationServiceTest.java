@@ -1,12 +1,16 @@
 package com.newsainturtle.notification.service;
 
+import com.newsainturtle.friend.entity.Friend;
+import com.newsainturtle.friend.repository.FriendRepository;
 import com.newsainturtle.notification.dto.NotificationListResponse;
+import com.newsainturtle.notification.dto.NotificationResponseRequest;
 import com.newsainturtle.notification.entity.FriendNotification;
 import com.newsainturtle.notification.entity.Notification;
 import com.newsainturtle.notification.entity.NotificationStatus;
 import com.newsainturtle.notification.entity.ScheduleNotification;
 import com.newsainturtle.notification.exception.NoResponseNotificationException;
 import com.newsainturtle.notification.exception.NotUserOwnNotificationException;
+import com.newsainturtle.notification.exception.NotificationResponseBadRequestException;
 import com.newsainturtle.notification.repository.NotificationRepository;
 import com.newsainturtle.schedule.entity.Schedule;
 import com.newsainturtle.schedule.repository.ScheduleRepository;
@@ -24,8 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.newsainturtle.notification.constant.NotificationConstant.NOT_USER_OWN_NOTIFICATION_MESSAGE;
-import static com.newsainturtle.notification.constant.NotificationConstant.NO_RESPONSE_NOTIFICATION_MESSAGE;
+import static com.newsainturtle.notification.constant.NotificationConstant.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 
@@ -41,6 +44,8 @@ class NotificationServiceTest {
     private NotificationRepository notificationRepository;
     @Mock
     private ScheduleRepository scheduleRepository;
+    @Mock
+    private FriendRepository friendRepository;
 
     @Nested
     @DisplayName("알림 조회 테스트")
@@ -307,6 +312,146 @@ class NotificationServiceTest {
 
             //when
             notificationService.sendFriendNotification(user.getUserId(), sender);
+            //then
+        }
+    }
+
+    @Nested
+    @DisplayName("알림 응답 테스트")
+    class responseNotificationTest {
+
+        @Test
+        @DisplayName("[실패] - 올바르지 않은 요청값")
+        void 올바르지않은요청값() {
+            //given
+            final String email = "yunaghgh@naver.com";
+            final User user = User.builder()
+                    .email("yunaghgh@naver.com")
+                    .nickname("Kuuuna98")
+                    .password("pwd1234")
+                    .kakao(false)
+                    .profile("path")
+                    .withdraw(false)
+                    .build();
+            final User sender = User.builder()
+                    .email("test127@naver.com")
+                    .nickname("johnny")
+                    .password("pwd127")
+                    .kakao(false)
+                    .profile("path")
+                    .withdraw(false)
+                    .build();
+
+            final NotificationResponseRequest notificationResponseRequest = NotificationResponseRequest.builder()
+                    .notificationId(1L)
+                    .isAccept(true)
+                    .type("aa")
+                    .build();
+
+            doReturn(user).when(userRepository).findByEmail(email);
+            doReturn(null).when(notificationRepository).findByNotificationIdAndReceiveUser(1L, user);
+
+            //when
+            NotificationResponseBadRequestException result = assertThrows(NotificationResponseBadRequestException.class,
+                    () -> notificationService.responseNotification(email, notificationResponseRequest));
+            //then
+            assertEquals(result.getMessage(), RESPONSE_NOTIFICATION_BAD_REQUEST_MESSAGE);
+        }
+
+        @Test
+        @DisplayName("[성공] - 친구 알림 응답 - 수락")
+        void 친구알림수락() {
+            //given
+            final String email = "yunaghgh@naver.com";
+            final User user = User.builder()
+                    .email("yunaghgh@naver.com")
+                    .nickname("Kuuuna98")
+                    .password("pwd1234")
+                    .kakao(false)
+                    .profile("path")
+                    .withdraw(false)
+                    .build();
+            final User sender = User.builder()
+                    .email("test127@naver.com")
+                    .nickname("johnny")
+                    .password("pwd127")
+                    .kakao(false)
+                    .profile("path")
+                    .withdraw(false)
+                    .build();
+
+            final Friend friend = Friend.builder()
+                    .isAccept(false)
+                    .requestUser(sender)
+                    .receiveUser(user)
+                    .build();
+            final FriendNotification notification = FriendNotification.builder()
+                    .notificationId(1L)
+                    .sendUserId(sender.getUserId())
+                    .receiveUser(user)
+                    .notificationStatus(NotificationStatus.NO_RESPONSE)
+                    .build();
+            final NotificationResponseRequest notificationResponseRequest = NotificationResponseRequest.builder()
+                    .notificationId(1L)
+                    .isAccept(true)
+                    .type("friend")
+                    .build();
+
+            doReturn(user).when(userRepository).findByEmail(email);
+            doReturn(notification).when(notificationRepository).findByNotificationIdAndReceiveUser(1L, user);
+            doReturn(Optional.of(sender)).when(userRepository).findById(sender.getUserId());
+            doReturn(friend).when(friendRepository).findByRequestUserAndReceiveUser(sender, user);
+
+            //when
+            notificationService.responseNotification(email, notificationResponseRequest);
+            //then
+        }
+
+        @Test
+        @DisplayName("[성공] - 친구 알림 응답 - 거절")
+        void 친구알림응답거절() {
+            //given
+            final String email = "yunaghgh@naver.com";
+            final User user = User.builder()
+                    .email("yunaghgh@naver.com")
+                    .nickname("Kuuuna98")
+                    .password("pwd1234")
+                    .kakao(false)
+                    .profile("path")
+                    .withdraw(false)
+                    .build();
+            final User sender = User.builder()
+                    .email("test127@naver.com")
+                    .nickname("johnny")
+                    .password("pwd127")
+                    .kakao(false)
+                    .profile("path")
+                    .withdraw(false)
+                    .build();
+
+            final Friend friend = Friend.builder()
+                    .isAccept(false)
+                    .requestUser(sender)
+                    .receiveUser(user)
+                    .build();
+            final FriendNotification notification = FriendNotification.builder()
+                    .notificationId(1L)
+                    .sendUserId(sender.getUserId())
+                    .receiveUser(user)
+                    .notificationStatus(NotificationStatus.NO_RESPONSE)
+                    .build();
+            final NotificationResponseRequest notificationResponseRequest = NotificationResponseRequest.builder()
+                    .notificationId(1L)
+                    .isAccept(false)
+                    .type("friend")
+                    .build();
+
+            doReturn(user).when(userRepository).findByEmail(email);
+            doReturn(notification).when(notificationRepository).findByNotificationIdAndReceiveUser(1L, user);
+            doReturn(Optional.of(sender)).when(userRepository).findById(sender.getUserId());
+
+            //when
+            notificationService.responseNotification(email, notificationResponseRequest);
             //then
         }
     }

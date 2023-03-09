@@ -3,14 +3,18 @@ package com.newsainturtle.notification.controller;
 import com.newsainturtle.common.dto.BaseResponse;
 import com.newsainturtle.common.security.UserDetails;
 import com.newsainturtle.notification.dto.NotificationListResponse;
+import com.newsainturtle.notification.dto.NotificationResponseRequest;
 import com.newsainturtle.notification.service.NotificationService;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
+
+import javax.validation.Valid;
 
 import static com.newsainturtle.notification.constant.NotificationConstant.*;
 
@@ -56,6 +60,19 @@ public class NotificationController {
         return new ResponseEntity<>(BaseResponse.from(
                 true,
                 REMOVE_NOTIFICATION_ALL_SUCCESS_MESSAGE)
+                , HttpStatus.OK);
+    }
+
+    @PostMapping("")
+    @ApiOperation(value = "알림 응답", notes = "사용자가 알림에 응답함")
+    public ResponseEntity<BaseResponse> responseNotification(@ApiIgnore Authentication authentication,
+                                                             @RequestBody @Valid @ApiParam(value = "알림 응답", required = true)final NotificationResponseRequest notificationResponseRequest) {
+        UserDetails userDetails = (UserDetails) authentication.getDetails();
+        String email = userDetails.getUsername();
+        notificationService.responseNotification(email, notificationResponseRequest) ;
+        return new ResponseEntity<>(BaseResponse.from(
+                true,
+                RESPONSE_NOTIFICATION_SUCCESS_MESSAGE)
                 , HttpStatus.OK);
     }
 }

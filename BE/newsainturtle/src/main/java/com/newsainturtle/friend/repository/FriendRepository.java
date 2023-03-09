@@ -23,4 +23,9 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
     @Query("SELECT f FROM Friend f WHERE (f.requestUser = ?1 AND f.receiveUser = ?2 OR f.requestUser = ?2 AND f.receiveUser = ?1) AND f.isAccept = true")
     Friend findByFriend(User user, User friendUser);
 
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM Friend f WHERE (f.requestUser = ?1 AND f.receiveUser = ?2 OR f.requestUser = ?2 AND f.receiveUser = ?1) AND f.isAccept = false")
+    void deleteRejectedUser(User user, User friendUser);
+
 }

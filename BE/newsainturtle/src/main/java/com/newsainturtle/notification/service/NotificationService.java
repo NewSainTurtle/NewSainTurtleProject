@@ -1,13 +1,17 @@
 package com.newsainturtle.notification.service;
 
+import com.newsainturtle.friend.entity.Friend;
+import com.newsainturtle.friend.repository.FriendRepository;
 import com.newsainturtle.notification.dto.NotificationListResponse;
 import com.newsainturtle.notification.dto.NotificationResponse;
+import com.newsainturtle.notification.dto.NotificationResponseRequest;
 import com.newsainturtle.notification.entity.FriendNotification;
 import com.newsainturtle.notification.entity.Notification;
 import com.newsainturtle.notification.entity.NotificationStatus;
 import com.newsainturtle.notification.entity.ScheduleNotification;
 import com.newsainturtle.notification.exception.NoResponseNotificationException;
 import com.newsainturtle.notification.exception.NotUserOwnNotificationException;
+import com.newsainturtle.notification.exception.NotificationResponseBadRequestException;
 import com.newsainturtle.notification.repository.NotificationRepository;
 import com.newsainturtle.schedule.entity.Schedule;
 import com.newsainturtle.schedule.repository.ScheduleRepository;
@@ -27,6 +31,7 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
     private final ScheduleRepository scheduleRepository;
+    private final FriendRepository friendRepository;
 
     @Transactional(readOnly = true)
     public NotificationListResponse selectNotificationList(String email) {
@@ -93,5 +98,33 @@ public class NotificationService {
     public void changeFriendNotification(Long senderId, User receiver, NotificationStatus notificationStatus) {
         FriendNotification notification = (FriendNotification) notificationRepository.findBySendUserIdAndReceiveUser(senderId, receiver);
         notification.setNotificationStatus(notificationStatus);
+    }
+
+    public void responseNotification(String email, NotificationResponseRequest notificationResponseRequest) {
+        User user = userRepository.findByEmail(email);
+        long notificationId = notificationResponseRequest.getNotificationId();
+        Notification notification = notificationRepository.findByNotificationIdAndReceiveUser(notificationId, user);
+        if (notification != null) {
+            User requestUser = userRepository.findById(notification.getSendUserId()).orElse(null);
+            if (notificationResponseRequest.getType().equals("friend")) {
+                responseFriendNotification((FriendNotification) notification, notificationResponseRequest.getIsAccept(), user, requestUser);
+                return;
+            } else if (notificationResponseRequest.getType().equals("schedule")) {
+                //schedule
+                return;
+            }
+        }
+        throw new NotificationResponseBadRequestException();
+    }
+
+    public void responseFriendNotification(FriendNotification notification, boolean isAccept, User user, User requestUser) {
+        if (isAccept) {
+            Friend friend = friendRepository.findByRequestUserAndReceiveUser(requestUser, user);
+            friend.updateIsAccept(true);
+            notification.setNotificationStatus(NotificationStatus.ACCEPT);
+        } else {
+            friendRepository.deleteRejectedUser(requestUser, user);
+            notification.setNotificationStatus(NotificationStatus.REJECT);
+        }
     }
 }
